@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4">
+    {% if current_user.role == 'ADMIN' %}
+    <div class="flex justify-end">
+        <a href="{{ url_for('buses') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Add buses</a>
+    </div>
+    manage-buses
+    {% endif %}
+    <h1 class="text-2xl font-bold mb-4">Manage Buses</h1>
+
+    <div class="flex justify-between mb-4">
+        <input type="text" id="search" placeholder="Search..." class="border rounded px-2 py-1" oninput="filterTable()">
+        <select id="sortOptions" onchange="sortTable()">
+            <option value="id">Sort by Bus ID</option>
+            <option value="name">Sort by Bus Name</option>
+            <option value="number">Sort by Bus Number</option>
+            <option value="manufacturer">Sort by Manufacturer</option>
+            <option value="date">Sort by Manufacturer Date</option>
+            <option value="bought">Sort by Bought Date</option>
+        </select>
+    </div>
+
+    <table class="min-w-full bg-white border border-gray-300">
+        <thead>
+            <tr class="bg-gray-200">
+                <th class="py-2 px-4 border">Bus ID</th>
+                <th class="py-2 px-4 border">Bus Name</th>
+                <th class="py-2 px-4 border">Bus Number</th>
+                <th class="py-2 px-4 border">Bus Number Plate</th>
+                <th class="py-2 px-4 border">Description</th>
+                <th class="py-2 px-4 border">Manufacturer</th>
+                <th class="py-2 px-4 border">Manufacturer Date</th>
+                <th class="py-2 px-4 border">Bought Date</th>
+                <th class="py-2 px-4 border">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="buses-table-body">
+            {% for bus in buses %}
+            <tr class="hover:bg-gray-100">
+                <td class="py-2 px-4 border">{{ bus.id }}</td>
+                <td class="py-2 px-4 border">{{ bus.name }}</td>
+                <td class="py-2 px-4 border">{{ bus.bus_number }}</td>
+                <td class="py-2 px-4 border">{{ bus.bus_number_plate }}</td>
+                <td class="py-2 px-4 border">{{ bus.description }}</td>
+                <td class="py-2 px-4 border">{{ bus.manufacturer }}</td>
+                <td class="py-2 px-4 border">{{ bus.manufacturer_date.strftime('%Y-%m-%d') if bus.manufacturer_date else 'N/A' }}</td>
+                <td class="py-2 px-4 border">{{ bus.bought_date.strftime('%Y-%m-%d') if bus.bought_date else 'N/A' }}</td>
+                <td class="py-2 px-4 border">
+                    <a href="{{ url_for('edit_bus', bus_id=bus.id) }}" class="text-blue-600 hover:underline">Edit</a>
+                    <form action="{{ url_for('delete_bus', bus_id=bus.id) }}" method="POST" class="inline">
+                        <button type="submit" class="text-red-600 hover:underline">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function filterTable() {
+        const searchValue = document.getElementById('search').value.toLowerCase();
+        const rows = document.querySelectorAll('#buses-table-body tr');
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const busName = cells[1].textContent.toLowerCase();
+            const busNumber = cells[2].textContent.toLowerCase();
+            const description = cells[4].textContent.toLowerCase();
+
+            if (busName.includes(searchValue) || busNumber.includes(searchValue) || description.includes(searchValue)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function sortTable() {
+        const sortOption = document.getElementById('sortOptions').value;
+        const rows = Array.from(document.querySelectorAll('#buses-table-body tr'));
+        const sortedRows = rows.sort((a, b) => {
+            const aValue = a.cells[sortOption === 'id' ? 0 : sortOption === 'name' ? 1 : sortOption === 'number' ? 2 : sortOption === 'manufacturer' ? 5 : sortOption === 'date' ? 6 : 7].textContent;
+            const bValue = b.cells[sortOption === 'id' ? 0 : sortOption === 'name' ? 1 : sortOption === 'number' ? 2 : sortOption === 'manufacturer' ? 5 : sortOption === 'date' ? 6 : 7].textContent;
+
+            return aValue.localeCompare(bValue);
+        });
+
+        const tbody = document.getElementById('buses-table-body');
+        tbody.innerHTML = '';
+        sortedRows.forEach(row => tbody.appendChild(row));
+    }
+</script>
+{% endblock %}

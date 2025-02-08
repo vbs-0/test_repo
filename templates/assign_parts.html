@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <h1 class="text-2xl font-bold">Assign Parts to Bus</h1>
+
+    <form action="{{ url_for('assign_parts') }}" method="POST" class="space-y-4">
+        <div>
+            <label for="bus_id" class="block text-sm font-medium text-gray-700">Select Bus</label>
+            <select name="bus_id" id="bus_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                {% for bus in buses %}
+                <option value="{{ bus.id }}">{{ bus.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="part_id" class="block text-sm font-medium text-gray-700">Select Part</label>
+            <select name="part_id" id="part_id" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500z">
+                {% for part in products %}
+                <option value="{{ part.id }}">{{ part.name }} (In Stock: {{ part.quantity }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+            <input type="number" name="quantity" id="quantity" min="1" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+        </div>
+
+        <div class="flex justify-end">
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Assign Part</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const partSearchInput = document.getElementById('part_search');
+    const partSelect = document.getElementById('part_id');
+    const submitButton = document.querySelector('button[type="submit"]');
+
+    partSearchInput.addEventListener('input', function() {
+        const searchValue = this.value.toLowerCase();
+        const options = partSelect.options;
+
+        for (let i = 0; i < options.length; i++) {
+            const option = options[i];
+            const partName = option.text.toLowerCase();
+            option.style.display = partName.includes(searchValue) ? '' : 'none';
+        }
+    });
+
+    document.querySelector('form').addEventListener('submit', function() {
+        submitButton.disabled = true; // Disable the button to prevent multiple submissions
+    });
+</script>
+{% endblock %}

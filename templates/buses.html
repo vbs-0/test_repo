@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4">
+    {% if current_user.role == 'ADMIN' %}
+    <div class="flex justify-end">
+        <a href="{{ url_for('buses') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Add buses</a>
+    </div>
+    
+    {% endif %}
+    <h2 class="text-2xl font-bold mb-4">Buses Inventory</h2>
+    <a href="{{ url_for('add_bus') }}" class="bg-blue-500 text-white px-4 py-2 rounded-md">Add New Bus</a>
+    <ul class="mt-4">
+        {% for bus in buses %}
+        <li class="border-b py-2 flex justify-between items-center">
+            <div>
+<span class="font-semibold">{{ bus.number }}</span> - {{ bus.description }}
+            </div>
+            <div>
+                <a href="{{ url_for('edit_bus', bus_id=bus.id) }}" class="text-blue-500">Edit</a>
+                <form action="{{ url_for('delete_bus', bus_id=bus.id) }}" method="POST" style="display:inline;">
+                    <button type="submit" class="text-red-500 ml-2">Delete</button>
+                </form>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
