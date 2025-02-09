@@ -308,21 +308,38 @@ def products():
 
 @app.route('/products/add', methods=['POST'])
 def add_product():
-    """Add product quantity route."""
-    product_id = request.form.get('product_id')  
-    quantity = int(request.form.get('quantity')) 
-
+    """Add product route."""
+    product_id = request.form.get('product_id')
     
-    product = Product.query.get(product_id)
-    if product:
+    if product_id:  # If product_id exists, we're updating quantity
+        quantity = int(request.form.get('quantity'))
+        product = Product.query.get(product_id)
+        if product:
+            product.quantity += quantity
+            flash('Product quantity updated successfully')
+        else:
+            flash('Product not found', 'error')
+    else:  # If no product_id, we're creating a new product
+        name = request.form.get('name')
+        description = request.form.get('description')
+        quantity = int(request.form.get('quantity'))
+        price = float(request.form.get('price'))
+        category_id = int(request.form.get('category_id'))
+        low_stock_threshold = int(request.form.get('low_stock_threshold'))
         
-        product.quantity += quantity
-        flash('Product quantity updated successfully')
-    else:
-        flash('Product not found', 'error')
-
-    db.session.commit() 
-    return redirect(url_for('products'))   
+        product = Product(
+            name=name,
+            description=description,
+            quantity=quantity,
+            price=price,
+            category_id=category_id,
+            low_stock_threshold=low_stock_threshold
+        )
+        db.session.add(product)
+        flash('New product added successfully')
+    
+    db.session.commit()
+    return redirect(url_for('products'))
 
 @app.route('/categories')
 @login_required
@@ -813,16 +830,39 @@ def edit_bus(bus_id):
     """Edit an existing bus."""
     bus = Bus.query.get_or_404(bus_id)
     if request.method == 'POST':
-        bus.name = request.form.get('name')
-        bus.description = request.form.get('description')
-        db.session.commit()
-        
-        flash('Bus updated successfully')
-        log_user_activity(f'edited bus {bus.name}')
-        return redirect(url_for('manage_buses'))  # Redirect to Manage Buses
+        try:
+            # Update basic fields
+            bus.name = request.form.get('name')
+            bus.description = request.form.get('description')
+            bus.bus_number = request.form.get('bus_number')
+            bus.bus_number_plate = request.form.get('bus_number_plate')
+            bus.manufacturer = request.form.get('manufacturer')
+            
+            # Handle dates with proper validation
+            manufacturer_date = request.form.get('manufacturer_date')
+            bought_date = request.form.get('bought_date')
+            
+            if manufacturer_date:
+                bus.manufacturer_date = datetime.strptime(manufacturer_date, '%Y-%m-%d')
+            if bought_date:
+                bus.bought_date = datetime.strptime(bought_date, '%Y-%m-%d')
+                
+                # Validate dates
+                if bus.bought_date < bus.manufacturer_date:
+                    flash('Bought date cannot be earlier than manufacturer date', 'error')
+                    return render_template('edit_bus.html', bus=bus)
+            
+            db.session.commit()
+            flash('Bus details updated successfully', 'success')
+            log_user_activity(f'edited bus {bus.name}')
+            return redirect(url_for('manage_buses'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating bus: {str(e)}', 'error')
+            return render_template('edit_bus.html', bus=bus)
     
     return render_template('edit_bus.html', bus=bus)
-    print(f"Updated Bus ID: {bus.id}, Name: {bus.name}, Description: {bus.description}") 
 
 @app.route('/buses/delete/<int:bus_id>', methods=['POST'])
 @login_required

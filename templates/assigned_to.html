@@ -1,101 +1,191 @@
 {% extends "base.html" %}
 
 {% block content %}
-<body>
-    <div class="max-w-7xl mx-auto py-6 px-4">
-        <h1 class="text-2xl font-bold mb-4">Assigned Parts to Buses</h1>
-        
-        <div class="flex justify-between mb-4">
-            <input type="text" id="search" placeholder="Search..." class="border rounded px-2 py-1" oninput="filterTable()">
-            <div class="flex space-x-2">
-                <select id="filterBus" onchange="filterTable()">
-                    <option value="">Filter by Bus ID</option>
-                     <!-- Populate options dynamically -->
+<div class="max-w-7xl mx-auto py-6 px-4">
+    <h1 class="text-3xl font-bold text-cyan-400 mb-6">Assigned Parts to Buses</h1>
+    
+    <!-- Filters Section -->
+    <div class="bg-gray-900 rounded-lg p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Search -->
+            <div>
+                <label class="block text-sm font-medium text-cyan-400 mb-2">Search</label>
+                <div class="relative">
+                    <input type="text" 
+                           id="search" 
+                           placeholder="Search anything..." 
+                           class="w-full p-3 bg-gray-800 text-cyan-300 border border-cyan-600 rounded-lg focus:ring-2 focus:ring-cyan-500">
+                    <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-cyan-500"></i>
+                </div>
+            </div>
+
+            <!-- Bus Filter -->
+            <div>
+                <label class="block text-sm font-medium text-cyan-400 mb-2">Filter by Bus</label>
+                <select id="filterBus" 
+                        class="w-full p-3 bg-gray-800 text-cyan-300 border border-cyan-600 rounded-lg focus:ring-2 focus:ring-cyan-500">
+                    <option value="">All Buses</option>
+                    {% set bus_numbers = [] %}
+                    {% for assignment in assignments %}
+                        {% if assignment.bus_number not in bus_numbers %}
+                            {% set _ = bus_numbers.append(assignment.bus_number) %}
+                            <option value="{{ assignment.bus_number }}">{{ assignment.bus_number }}</option>
+                        {% endif %}
+                    {% endfor %}
                 </select>
-                <select id="filterAssignedBy" onchange="filterTable()">
-                    <option value="">Filter by Assigned By</option>
-                    <!-- Populate options dynamically -->
+            </div>
+
+            <!-- Assigned By Filter -->
+            <div>
+                <label class="block text-sm font-medium text-cyan-400 mb-2">Filter by Role</label>
+                <select id="filterAssignedBy" 
+                        class="w-full p-3 bg-gray-800 text-cyan-300 border border-cyan-600 rounded-lg focus:ring-2 focus:ring-cyan-500">
+                    <option value="">All Roles</option>
+                    {% set roles = [] %}
+                    {% for assignment in assignments %}
+                        {% if assignment.assigned_by not in roles %}
+                            {% set _ = roles.append(assignment.assigned_by) %}
+                            <option value="{{ assignment.assigned_by }}">{{ assignment.assigned_by }}</option>
+                        {% endif %}
+                    {% endfor %}
                 </select>
-                
-                <select id="sortOptions" onchange="sortTable()">
-                    <option value="date_desc">Sort by Date Assigned (Latest)</option>
-                    <option value="date_asc">Sort by Date Assigned (Oldest)</option>
-                    <option value="qty_desc">Sort by Quantity Assigned (High to Low)</option>
-                    <option value="qty_asc">Sort by Quantity Assigned (Low to High)</option>
+            </div>
+
+            <!-- Sort Options -->
+            <div>
+                <label class="block text-sm font-medium text-cyan-400 mb-2">Sort By</label>
+                <select id="sortOptions" 
+                        class="w-full p-3 bg-gray-800 text-cyan-300 border border-cyan-600 rounded-lg focus:ring-2 focus:ring-cyan-500">
+                    <option value="date_desc">Date (Latest First)</option>
+                    <option value="date_asc">Date (Oldest First)</option>
+                    <option value="qty_desc">Quantity (High to Low)</option>
+                    <option value="qty_asc">Quantity (Low to High)</option>
+                    <option value="bus_asc">Bus Number (A to Z)</option>
+                    <option value="bus_desc">Bus Number (Z to A)</option>
+                    <option value="part_asc">Part Name (A to Z)</option>
+                    <option value="part_desc">Part Name (Z to A)</option>
                 </select>
             </div>
         </div>
-
-        <table class="min-w-full bg-white border border-gray-300">
-            <thead>
-                <tr class="bg-gray-200">
-                    <th class="py-2 px-4 border">Bus ID</th>
-                    <th class="py-2 px-4 border">Bus Number</th>
-                    <th class="py-2 px-4 border">Product ID</th>
-                    <th class="py-2 px-4 border">Product Name</th>
-                    <th class="py-2 px-4 border">Quantity Assigned</th>
-                    <th class="py-2 px-4 border">Assigned By</th>
-                    <th class="py-2 px-4 border">Date Assigned</th>
-                </tr>
-            </thead>
-            <tbody id="assignments-table-body">
-                {% for assignment in assignments %}
-                <tr class="hover:bg-gray-100">
-                    <td class="py-2 px-4 border">{{ assignment.bus_id }}</td>
-                    <td class="py-2 px-4 border">{{ assignment.bus_number }}</td>
-                    <td class="py-2 px-4 border">{{ assignment.product_id }}</td>
-                    <td class="py-2 px-4 border">{{ assignment.product_name }}</td>
-                    <td class="py-2 px-4 border">{{ assignment.quantity }}</td>
-                    <td class="py-2 px-4 border">{{ assignment.assigned_by }}</td>
-                    <td class="py-2 px-4 border">{{ assignment.date_assigned }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
 
-    <script>
-        function filterTable() {
-            const searchValue = document.getElementById('search').value.toLowerCase();
-            const filterBus = document.getElementById('filterBus').value;
-            const filterAssignedBy = document.getElementById('filterAssignedBy').value;
-            const rows = document.querySelectorAll('#assignments-table-body tr');
+    <!-- Table Section -->
+    <div class="bg-gray-900 rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-800">
+                <thead class="bg-gray-800">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Bus Number</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Part Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Quantity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Assigned By</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Date Assigned</th>
+                    </tr>
+                </thead>
+                <tbody id="assignments-table-body" class="divide-y divide-gray-800">
+                    {% for assignment in assignments %}
+                    <tr class="hover:bg-gray-800 transition-colors duration-150"
+                        data-bus="{{ assignment.bus_number }}"
+                        data-part="{{ assignment.product_name }}"
+                        data-role="{{ assignment.assigned_by }}"
+                        data-quantity="{{ assignment.quantity }}"
+                        data-date="{{ assignment.date_assigned }}">
+                        <td class="px-6 py-4 whitespace-nowrap text-cyan-300">{{ assignment.bus_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-cyan-300">{{ assignment.product_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-cyan-300">{{ assignment.quantity }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-cyan-300">{{ assignment.assigned_by }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-cyan-300">{{ assignment.date_assigned.strftime('%Y-%m-%d %H:%M') if assignment.date_assigned else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search');
+    const filterBus = document.getElementById('filterBus');
+    const filterAssignedBy = document.getElementById('filterAssignedBy');
+    const sortOptions = document.getElementById('sortOptions');
+    
+    // Add event listeners
+    [searchInput, filterBus, filterAssignedBy, sortOptions].forEach(element => {
+        element.addEventListener('input', updateTable);
+        element.addEventListener('change', updateTable);
+    });
+
+    function updateTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedBus = filterBus.value.toLowerCase();
+        const selectedRole = filterAssignedBy.value.toLowerCase();
+        const rows = document.querySelectorAll('#assignments-table-body tr');
+        
+        rows.forEach(row => {
+            const busNumber = row.getAttribute('data-bus').toLowerCase();
+            const partName = row.getAttribute('data-part').toLowerCase();
+            const role = row.getAttribute('data-role').toLowerCase();
+            const text = row.textContent.toLowerCase();
             
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                const busId = cells[0].textContent.toLowerCase();
-                const busName = cells[1].textContent.toLowerCase();
-                const assignedBy = cells[5].textContent.toLowerCase();
-                const matchesSearch = busName.includes(searchValue) || assignedBy.includes(searchValue);
-                const matchesBusFilter = filterBus ? busId === filterBus : true;
-                const matchesAssignedByFilter = filterAssignedBy ? assignedBy === filterAssignedBy : true;
+            // Check if row matches all filters
+            const matchesSearch = text.includes(searchTerm);
+            const matchesBus = !selectedBus || busNumber === selectedBus;
+            const matchesRole = !selectedRole || role === selectedRole;
+            
+            row.style.display = (matchesSearch && matchesBus && matchesRole) ? '' : 'none';
+        });
 
-                if (matchesSearch && matchesBusFilter && matchesAssignedByFilter) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
+        sortTable();
+    }
 
-        function sortTable() {
-            const sortOption = document.getElementById('sortOptions').value;
-            const rows = Array.from(document.querySelectorAll('#assignments-table-body tr'));
-            const sortedRows = rows.sort((a, b) => {
-                const qtyA = parseInt(a.cells[4].textContent);
-                const qtyB = parseInt(b.cells[4].textContent);
-                const dateA = new Date(a.cells[6].textContent);
-                const dateB = new Date(b.cells[6].textContent);
+    function sortTable() {
+        const sortOption = sortOptions.value;
+        const rows = Array.from(document.querySelectorAll('#assignments-table-body tr'));
+        const tbody = document.getElementById('assignments-table-body');
 
-                if (sortOption === 'date_desc') return dateB - dateA;
-                if (sortOption === 'date_asc') return dateA - dateB;
-                if (sortOption === 'qty_desc') return qtyB - qtyA;
-                if (sortOption === 'qty_asc') return qtyA - qtyB;
-            });
+        rows.sort((a, b) => {
+            let valueA, valueB;
+            
+            switch(sortOption) {
+                case 'date_desc':
+                case 'date_asc':
+                    valueA = new Date(a.getAttribute('data-date'));
+                    valueB = new Date(b.getAttribute('data-date'));
+                    break;
+                case 'qty_desc':
+                case 'qty_asc':
+                    valueA = parseInt(a.getAttribute('data-quantity'));
+                    valueB = parseInt(b.getAttribute('data-quantity'));
+                    break;
+                case 'bus_asc':
+                case 'bus_desc':
+                    valueA = a.getAttribute('data-bus');
+                    valueB = b.getAttribute('data-bus');
+                    break;
+                case 'part_asc':
+                case 'part_desc':
+                    valueA = a.getAttribute('data-part');
+                    valueB = b.getAttribute('data-part');
+                    break;
+            }
 
-            const tbody = document.getElementById('assignments-table-body');
-            tbody.innerHTML = '';
-            sortedRows.forEach(row => tbody.appendChild(row));
-        }
-    </script>
+            if (sortOption.endsWith('desc')) {
+                [valueA, valueB] = [valueB, valueA];
+            }
+
+            if (typeof valueA === 'string') {
+                return valueA.localeCompare(valueB);
+            }
+            return valueA - valueB;
+        });
+
+        tbody.innerHTML = '';
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // Initial sort
+    sortTable();
+});
+</script>
 {% endblock %}

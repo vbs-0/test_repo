@@ -6,13 +6,12 @@
     <div class="flex justify-end">
         <a href="{{ url_for('buses') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Add buses</a>
     </div>
-    manage-buses
     {% endif %}
     <h1 class="text-2xl font-bold mb-4">Manage Buses</h1>
 
     <div class="flex justify-between mb-4">
-        <input type="text" id="search" placeholder="Search..." class="border rounded px-2 py-1" oninput="filterTable()">
-        <select id="sortOptions" onchange="sortTable()">
+        <input type="text" id="search" placeholder="Search..." class="border rounded px-2 py-1 text-indigo-300 bg-[#1e1b4b]" oninput="filterTable()">
+        <select id="sortOptions" onchange="sortTable()" class="border rounded px-2 py-1">
             <option value="id">Sort by Bus ID</option>
             <option value="name">Sort by Bus Name</option>
             <option value="number">Sort by Bus Number</option>
@@ -66,15 +65,17 @@
         
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
-            const busName = cells[1].textContent.toLowerCase();
-            const busNumber = cells[2].textContent.toLowerCase();
-            const description = cells[4].textContent.toLowerCase();
+            let found = false;
+            
+            // Search through all columns
+            cells.forEach(cell => {
+                const cellText = cell.textContent.toLowerCase();
+                if (cellText.includes(searchValue)) {
+                    found = true;
+                }
+            });
 
-            if (busName.includes(searchValue) || busNumber.includes(searchValue) || description.includes(searchValue)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+            row.style.display = found ? '' : 'none';
         });
     }
 
@@ -85,6 +86,15 @@
             const aValue = a.cells[sortOption === 'id' ? 0 : sortOption === 'name' ? 1 : sortOption === 'number' ? 2 : sortOption === 'manufacturer' ? 5 : sortOption === 'date' ? 6 : 7].textContent;
             const bValue = b.cells[sortOption === 'id' ? 0 : sortOption === 'name' ? 1 : sortOption === 'number' ? 2 : sortOption === 'manufacturer' ? 5 : sortOption === 'date' ? 6 : 7].textContent;
 
+            // Handle numeric values for ID
+            if (sortOption === 'id') {
+                return parseInt(aValue) - parseInt(bValue);
+            }
+            // Handle date values
+            if (sortOption === 'date' || sortOption === 'bought') {
+                return new Date(aValue) - new Date(bValue);
+            }
+            // Handle text values
             return aValue.localeCompare(bValue);
         });
 
@@ -92,5 +102,8 @@
         tbody.innerHTML = '';
         sortedRows.forEach(row => tbody.appendChild(row));
     }
+
+    // Add event listener for search input
+    document.getElementById('search').addEventListener('input', filterTable);
 </script>
 {% endblock %}

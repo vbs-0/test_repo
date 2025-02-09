@@ -5,150 +5,369 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventory Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <style>
-        /* Custom Styles */
-        body {
-            background-color: #f9f9f9; /* Light background for the body */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        /* Navigation Styles */
-        nav {
-            background-color: #ff8c00; /* Orange background for the navbar */
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: white;
+            transition: all 0.3s ease;
+            border-radius: 0.5rem;
+            gap: 0.5rem;
         }
 
-        nav a {
-            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for hover effects */
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
         }
 
-        nav a:hover {
-            background-color: #e07b00; /* Darker orange on hover */
-            color: white; /* White text on hover */
+        /* Hamburger Menu */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 40;
         }
 
-        /* Sidebar Styles */
-        .sidebar {
-            transition: border-color 0.3s ease; /* Smooth transition for border color */
+        .menu-overlay.show {
+            opacity: 1;
+            visibility: visible;
         }
 
-        .message-box.success {
-            border-left: 4px solid #38a169; /* Green border for success */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100%;
+            background: linear-gradient(145deg, var(--bg-card), rgba(30, 27, 75, 0.98));
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            transition: all 0.3s ease;
+            z-index: 50;
+            overflow-y: auto;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(99, 102, 241, 0.2);
         }
 
-        .message-box.error {
-            border-left: 4px solid #e53e3e; /* Red border for error */
+        .side-menu.show {
+            left: 0;
         }
 
-        /* Main Content Styles */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem 1rem;
+            color: var(--text-light);
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .menu-item:hover {
+            background: linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.2));
+            transform: translateX(5px);
+        }
+
+        .menu-item.active {
+            background: linear-gradient(145deg, var(--primary), var(--primary-light));
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .menu-item i {
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .menu-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: rgba(224, 231, 255, 0.6);
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+            padding-left: 0.75rem;
+        }
+
+        /* Side Menu Header */
+        .side-menu h2 {
+            color: var(--text-light);
+        }
+
+        .side-menu button {
+            color: var(--text-light);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .side-menu button:hover {
+            background: rgba(99, 102, 241, 0.1);
+            transform: rotate(90deg);
+        }
+
+        /* Bottom Actions */
+        .side-menu .border-t {
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        /* Logout Button */
+        .menu-item.text-red-600 {
+            color: #ef4444;
+        }
+
+        .menu-item.text-red-600:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        /* User Profile */
+        .user-profile {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+        }
+
+        /* Main Content */
         main {
-            border-radius: 8px; /* Rounded corners for main content */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-            padding: 20px; /* Padding for main content */
-            background-color: white; /* White background for main content */
+            background: linear-gradient(135deg, var(--bg-main), var(--bg-alt));
+            min-height: calc(100vh - 64px);
+            padding-top: 2rem;
+        }
+
+        .content-card {
+            background: linear-gradient(145deg, var(--bg-card), rgba(30, 27, 75, 0.95));
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        /* Hamburger Button Animation */
+        .hamburger-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .hamburger-icon.active {
+            transform: rotate(90deg);
         }
     </style>
 </head>
-<body>
+<body class="bg-gray-50">
     {% if current_user.is_authenticated %}
-    <nav class="text-white">
+    <nav class="navbar fixed w-full top-0 z-30">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <a class="font-bold text-xl">IMS</a>
-                    <button id="hamburger" class="md:hidden ml-4 focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                        </svg>
+                <!-- Left Side with Hamburger and Logo -->
+                <div class="flex items-center space-x-4">
+                    <!-- Hamburger Menu Button -->
+                    <button class="text-white focus:outline-none hover:bg-white/10 p-2 rounded-lg transition-all duration-200" id="menu-button">
+                        <i class="fas fa-bars text-xl hamburger-icon icon-animate"></i>
                     </button>
-                    <div class="ml-10 flex items-baseline space-x-4 hidden md:flex" id="nav-links">
-                        {% if current_user.role in ['ADMIN', 'MANAGER', 'SUPERVISOR'] %}
-                        <a href="{{ url_for('reports') }}" class="px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
-                        {% endif %}
-                        
-                        <a href="{{ url_for('products') }}" class="px-3 py-2 rounded-md text-sm font-medium">Products</a>
-                        {% if current_user.role in ['ADMIN', 'MANAGER'] %}
-                        <a href="{{ url_for('categories') }}" class="px-3 py-2 rounded-md text-sm font-medium">Categories</a>
-                        {% endif %}
-                        {% if current_user.role in ['ADMIN', 'MANAGER', 'SUPERVISOR'] %}
-                        <a href="{{ url_for('orders') }}" class="px-3 py-2 rounded-md text-sm font-medium">Orders</a>
-                        {% endif %}
-                        
-                        <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium">Stock Alerts</a>
 
+                    <a class="flex items-center space-x-2 hover:scale-105 transition-transform duration-200">
+                        <i class="fas fa-boxes text-2xl text-white icon-animate"></i>
+                        <span class="text-xl font-bold text-white">IMS</span>
+                    </a>
+                </div>
 
-                        {% if current_user.role == 'ADMIN' %}
-                        <a href="{{ url_for('users') }}" class="px-3 py-2 rounded-md text-sm font-medium">Users</a>
-                        {% endif %}
-                        {% if current_user.role == 'ADMIN' %}
-                        <a href="{{ url_for('user_activity') }}" class="px-3 py-2 rounded-md text-sm font-medium">User Activity Logs</a>
-                        {% endif %}
-                        {% if current_user.role == 'ADMIN' %}
-                <a href="{{ url_for('manage_buses') }}"class="px-3 py-2 rounded-md text-sm font-medium">Manage Buses</a>
-                {% endif %}
-                        {% if current_user.role == 'SUPERVISOR','USER' %}
-                        <a href="{{ url_for('assign_parts') }}" class="px-3 py-2 rounded-md text-sm font-medium">Assign Parts to Bus</a>
-                        {% endif %}
-                        {% if current_user.role == 'ADMIN','SUPERVISOR','MANAGER' %}
-                        <a href="{{ url_for('assigned_to') }}" class="px-3 py-2 rounded-md text-sm font-medium">Assigned Parts</a>
-                        {% endif %}
+                <!-- Center Navigation -->
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{{ url_for('reports') }}" class="nav-link">
+                        <i class="fas fa-chart-line icon-animate"></i>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <a href="{{ url_for('products') }}" class="nav-link">
+                        <i class="fas fa-box icon-animate"></i>
+                        <span>Products</span>
+                    </a>
+                    <a href="{{ url_for('orders') }}" class="nav-link">
+                        <i class="fas fa-shopping-cart icon-animate"></i>
+                        <span>Orders</span>
+                    </a>
+                </div>
+
+                <!-- Right Side - User Profile -->
+                <div class="flex items-center">
+                    <div class="user-profile hidden md:flex items-center space-x-2">
+                        <i class="fas fa-user-circle text-white text-xl icon-animate"></i>
+                        <div>
+                            <div class="text-white text-sm">{{ current_user.name }}</div>
+                            <div class="text-white text-xs opacity-75">{{ current_user.role }}</div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex items-center">
-                    <span class="mr-4">{{ current_user.name }} ({{ current_user.role }})</span>
-                    <a href="{{ url_for('logout') }}" class="px-3 py-2 rounded-md text-sm font-medium">Logout</a>
-                </div>
-            </div>
-            <div class="flex flex-col md:hidden hidden" id="nav-links-mobile">
-                <a href="{{ url_for('dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium">Stock Alerts</a>
-                <a href="{{ url_for('products') }}" class="px-3 py-2 rounded-md text-sm font-medium">Products</a>
-                {% if current_user.role in ['ADMIN', 'MANAGER'] %}
-                <a href="{{ url_for('categories') }}" class="px-3 py-2 rounded-md text-sm font-medium">Categories</a>
+    </nav>
+
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menu-overlay"></div>
+
+    <!-- Side Menu -->
+    <div class="side-menu" id="side-menu">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800">Menu</h2>
+            <button class="text-gray-500 hover:text-gray-700" id="close-menu">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Only - Top Links -->
+        <div class="md:hidden menu-section">
+            <div class="menu-section-title">Quick Access</div>
+            <a href="{{ url_for('reports') }}" class="menu-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('products') }}" class="menu-item">
+                <i class="fas fa-box"></i>
+                <span>Products</span>
+            </a>
+            <a href="{{ url_for('orders') }}" class="menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            
+        </div>
+
+        <!-- Inventory Section -->
+        <div class="menu-section">
+            <div class="menu-section-title">Inventory</div>
+            {% if current_user.role in ['ADMIN', 'MANAGER'] %}
+            <a href="{{ url_for('categories') }}" class="menu-item">
+                <i class="fas fa-tags"></i>
+                <span>Categories</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('dashboard') }}" class="menu-item">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Stock Alerts</span>
+            </a>
+        </div>
+
+        <!-- Bus Management -->
+        <div class="menu-section">
+            <div class="menu-section-title">Bus Management</div>
+            {% if current_user.role == 'ADMIN' %}
+            <a href="{{ url_for('manage_buses') }}" class="menu-item">
+                <i class="fas fa-bus"></i>
+                <span>Manage Buses</span>
+            </a>
+            {% endif %}
+            {% if current_user.role in ['SUPERVISOR', 'USER'] %}
+            <a href="{{ url_for('assign_parts') }}" class="menu-item">
+                <i class="fas fa-tools"></i>
+                <span>Assign Parts</span>
+            </a>
+            {% endif %}
+            {% if current_user.role in ['ADMIN', 'SUPERVISOR', 'MANAGER'] %}
+            <a href="{{ url_for('assigned_to') }}" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Assigned Parts</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Admin Tools -->
+        {% if current_user.role == 'ADMIN' %}
+        <div class="menu-section">
+            <div class="menu-section-title">Administration</div>
+            <a href="{{ url_for('users') }}" class="menu-item">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
+            <a href="{{ url_for('user_activity') }}" class="menu-item">
+                <i class="fas fa-history"></i>
+                <span>Activity Logs</span>
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Bottom Actions -->
+        <div class="mt-auto pt-4 border-t">
+            <a href="{{ url_for('logout') }}" class="menu-item text-red-600 hover:bg-red-50">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <main class="pt-16">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-700 border-l-4 border-green-500{% else %}bg-red-100 text-red-700 border-l-4 border-red-500{% endif %}">
+                            <div class="flex items-center">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %} mr-2"></i>
+                                {{ message }}
+                            </div>
+                        </div>
+                    {% endfor %}
                 {% endif %}
-                {% if current_user.role in ['ADMIN', 'MANAGER', 'SUPERVISOR'] %}
-                <a href="{{ url_for('orders') }}" class="px-3 py-2 rounded-md text-sm font-medium">Orders</a>
-                {% endif %}
-                {% if current_user.role in ['ADMIN', 'MANAGER', 'SUPERVISOR'] %}
-                <a href="{{ url_for('reports') }}" class="px-3 py-2 rounded-md text-sm font-medium">Dashboarduu</a>
-                {% endif %}
-                {% if current_user.role == 'ADMIN' %}
-                <a href="{{ url_for('users') }}" class="px-3 py-2 rounded-md text-sm font-medium">Users</a>
-                {% endif %}
-                {% if current_user.role == 'ADMIN' %}
-                <a href="{{ url_for('user_activity') }}" class="px-3 py-2 rounded-md text-sm font-medium">User Activity Logs</a>
-                {% endif %}
-                {% if current_user.role == 'ADMIN','USER' %}
-                <a href="{{ url_for('manage_buses') }}"class="px-3 py-2 rounded-md text-sm font-medium">Manage Buses</a>
-                {% endif %}
-                {% if current_user.role == 'MANAGER' %}
-                <a href="{{ url_for('assign_parts') }}" class="px-3 py-2 rounded-md text-sm font-medium">Assign Parts to Bus</a>
-                {% endif %}
-                
+            {% endwith %}
+
+            <div class="content-card p-6">
+                {% block content %}{% endblock %}
             </div>
         </div>
-    </nav>
+    </main>
     {% endif %}
 
-    <main class="max-w-7xl mx-auto py-6 px-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="message-box {{ 'success' if category == 'success' else 'error' }} bg-{{ 'green' if category == 'success' else 'red' }}-100 text-{{ 'green' if category == 'success' else 'red' }}-700 p-4 mb-4 rounded-md">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        {% block content %}{% endblock %}
-    </main>
-
     <script>
-        const hamburger = document.getElementById('hamburger');
-        const navLinksMobile = document.getElementById('nav-links-mobile');
+        const menuButton = document.getElementById('menu-button');
+        const closeMenu = document.getElementById('close-menu');
+        const menuOverlay = document.getElementById('menu-overlay');
+        const sideMenu = document.getElementById('side-menu');
+        const hamburgerIcon = menuButton.querySelector('.hamburger-icon');
 
-        hamburger.addEventListener('click', () => {
-            navLinksMobile.classList.toggle('hidden');
+        function openMenu() {
+            menuOverlay.classList.add('show');
+            sideMenu.classList.add('show');
+            hamburgerIcon.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMenuHandler() {
+            menuOverlay.classList.remove('show');
+            sideMenu.classList.remove('show');
+            hamburgerIcon.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        menuButton.addEventListener('click', openMenu);
+        closeMenu.addEventListener('click', closeMenuHandler);
+        menuOverlay.addEventListener('click', closeMenuHandler);
+
+        // Close menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMenuHandler();
         });
     </script>
 </body>

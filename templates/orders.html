@@ -6,7 +6,7 @@
         <h1 class="text-2xl font-bold">Orders</h1>
         <div class="flex justify-end space-x-3">
             <form action="" method="get" class="flex space-x-3">
-                <input type="text" id="search" name="search" value="{{ search }}" placeholder="Search Orders" class="block w-full rounded-md border-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <input type="text" id="search" name="search" value="{{ search }}" placeholder="Search Orders" class="block w-full rounded-md border-black shadow-sm focus:border-indigo-500 text-black focus:ring-indigo-500">
                 <select id="sort" name="status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" onchange="this.form.submit()">
                     <option value="all" {% if status == 'all' %}selected{% endif %}>All</option>
                     <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
@@ -63,13 +63,16 @@
 
                     </td>
                 </tr>
-                <tr id="orderDetails{{ order.id }}" class="hidden bg-gray-50">
-                    <td colspan="5" class="px-6 py-4">
-                        <div class="text-sm text-gray-900">
-                            <h4 class="font-medium">Order Items:</h4>
-                            <ul class="list-disc list-inside">
+                <tr id="orderDetails{{ order.id }}" class="hidden">
+                    <td colspan="5" class="px-6 py-4" style="background: linear-gradient(145deg, var(--bg-card), rgba(30, 27, 75, 0.95));">
+                        <div class="text-sm text-white">
+                            <h4 class="font-medium text-indigo-300 mb-2">Order Items:</h4>
+                            <ul class="list-disc list-inside space-y-1">
                                 {% for item in order.items %}
-                                <li>{{ item.product.name }} - Quantity: {{ item.quantity }}</li>
+                                <li class="flex items-center gap-2">
+                                    <i class="fas fa-box text-indigo-400"></i>
+                                    <span>{{ item.product.name }} - Quantity: {{ item.quantity }}</span>
+                                </li>
                                 {% endfor %}
                             </ul>
                         </div>
@@ -147,16 +150,17 @@
         });
 
         const searchInput = document.getElementById('search');
-let timeoutId;
+        const sortSelect = document.getElementById('sort');
+        let timeoutId;
 
-searchInput.addEventListener('input', function() {
-    const searchValue = searchInput.value;
-    const form = searchInput.closest('form');
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(function() {
-        form.submit();
-    }, 500); // submit the form 500ms after the user stops typing
-});
+        searchInput.addEventListener('input', function() {
+            const searchValue = searchInput.value;
+            const form = searchInput.closest('form');
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(function() {
+                form.submit();
+            }, 500); // submit the form 500ms after the user stops typing
+        });
 
         sortSelect.addEventListener('change', function() {
             const form = sortSelect.closest('form');
