@@ -12,19 +12,16 @@
     
     <!-- Stats Overview -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Orders Stat -->
+        <!-- Total Buses Stat -->
         <div class="content-card p-6">
             <div class="flex items-center">
                 <div class="p-3 rounded-lg" style="background: linear-gradient(145deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.1));">
-                    <i class="fas fa-shopping-cart text-indigo-400 text-xl"></i>
+                    <i class="fas fa-bus text-indigo-400 text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <h2 class="text-sm font-medium text-indigo-300">Total Orders</h2>
+                    <h2 class="text-sm font-medium text-indigo-300">Total Buses</h2>
                     <div class="flex items-baseline mt-1">
-                        <p class="text-2xl font-semibold text-white">{{ orders|length if orders else 0 }}</p>
-                        <span class="ml-2 text-green-400">
-                            <i class="fas fa-arrow-up text-sm"></i>
-                        </span>
+                        <p class="text-2xl font-semibold text-white">{{ total_buses if total_buses else 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -65,16 +62,16 @@
             </div>
         </div>
 
-        <!-- Maintenance Stat -->
+        <!-- Total Categories Stat -->
         <div class="content-card p-6">
             <div class="flex items-center">
                 <div class="p-3 rounded-lg" style="background: linear-gradient(145deg, rgba(249, 115, 22, 0.2), rgba(249, 115, 22, 0.1));">
-                    <i class="fas fa-tools text-orange-400 text-xl"></i>
+                    <i class="fas fa-tags text-orange-400 text-xl"></i>
                 </div>
                 <div class="ml-4">
-                    <h2 class="text-sm font-medium text-orange-300">Pending Maintenance</h2>
+                    <h2 class="text-sm font-medium text-orange-300">Total Categories</h2>
                     <div class="flex items-baseline mt-1">
-                        <p class="text-2xl font-semibold text-white">{{ pending_maintenance if pending_maintenance else 0 }}</p>
+                        <p class="text-2xl font-semibold text-white">{{ total_categories if total_categories else 0 }}</p>
                     </div>
                 </div>
             </div>

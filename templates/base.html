@@ -286,7 +286,7 @@
                 <span>Assign Parts</span>
             </a>
             {% endif %}
-            {% if current_user.role in ['ADMIN', 'SUPERVISOR', 'MANAGER'] %}
+            {% if current_user.role in ['ADMIN', 'SUPERVISOR', 'MANAGER','USER'] %}
             <a href="{{ url_for('assigned_to') }}" class="menu-item">
                 <i class="fas fa-clipboard-list"></i>
                 <span>Assigned Parts</span>

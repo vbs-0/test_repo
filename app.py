@@ -41,15 +41,11 @@ class Bus(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    bus_number = db.Column(db.String(50), nullable=False)  # New field for Bus Number
-    bus_number_plate = db.Column(db.String(50), nullable=False)  # New field for Bus Number Plate
-    manufacturer = db.Column(db.String(100), nullable=False)  # New field for Manufacturer
-    manufacturer_date = db.Column(db.Date, nullable=False)  # New field for Manufacturer Date
-    bought_date = db.Column(db.Date, nullable=False)  # New field for Bought Date
-    """Define the Bus model."""
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text)
+    bus_number = db.Column(db.String(50), nullable=False)  # Bus Number
+    bus_number_plate = db.Column(db.String(50), nullable=False)  # Bus Number Plate
+    manufacturer = db.Column(db.String(100), nullable=False)  # Manufacturer
+    manufacturer_date = db.Column(db.Date, nullable=False)  # Manufacturer Date
+    bought_date = db.Column(db.Date, nullable=False)  # Bought Date
 class Part(db.Model):
     """Define the Part model."""
     id = db.Column(db.Integer, primary_key=True)
@@ -201,8 +197,17 @@ def logout():
 def dashboard():
     """Dashboard route."""
     log_user_activity('visited dashboard')
+    
     # Fetch low stock products
     low_stock = Product.query.filter(Product.quantity <= Product.low_stock_threshold).all()
+    
+    # Get total counts
+    total_products = Product.query.count()
+    total_buses = Bus.query.count()
+    total_categories = Category.query.count()
+    
+    # Fetch recent orders
+    orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
 
     # Fetch total sales by product
     total_sales = db.session.query(
@@ -267,7 +272,13 @@ def dashboard():
     plt.savefig('static/daily_sales.png')  
     plt.close()
 
-    return render_template('dashboard.html', low_stock=low_stock)
+    return render_template('dashboard.html', 
+        low_stock=low_stock,
+        total_products=total_products,
+        total_buses=total_buses,
+        total_categories=total_categories,
+        orders=orders
+    )
 
 @app.route('/users')
 @admin_required
@@ -431,13 +442,6 @@ def create_order():
     flash('Order created successfully')
     return redirect(url_for('orders'))
 
-    db.session.add(order)
-    db.session.commit()
-    log_user_activity(f'created order with {len(order.items)} items')
-    
-    flash('Order created successfully')
-    return redirect(url_for('orders'))
-
 
 @app.route('/orders/<int:order_id>/update-status', methods=['POST'])
 @manager_required
@@ -453,136 +457,6 @@ def update_order_status(order_id):
         flash('Order status updated successfully')
     
     return redirect(url_for('orders'))
-'''
-@app.route('/reports')
-@manager_required
-def reports():
-    """Reports route."""
-    log_user_activity('visited reports')
-    low_stock = Product.query.filter(Product.quantity <= Product.low_stock_threshold).all()
-    total_inventory_value = db.session.query(db.func.sum(Product.quantity * Product.price)).scalar()
-    
-    total_sales = db.session.query(
-        Product.name,
-        db.func.sum(OrderItem.quantity).label('total_sales')
-    ).join(OrderItem).join(Order).group_by(Product.id).all()
-
-    order_counts = db.session.query(
-        Order.status,
-        db.func.count(Order.id).label('count')
-    ).group_by(Order.status).all()
-
-    order_counts_list = [{'status': status, 'count': count} for status, count in order_counts]
-
-    products = [item[0] for item in total_sales]
-    sales_values = [item[1] if item[1] is not None else 0 for item in total_sales]
-
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x=products, y=sales_values, palette='viridis', hue=products)  
-    plt.title('Total Sales by Product')
-    plt.xlabel('Product')
-    plt.ylabel('Total Sales')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig('static/total_sales.png')  
-    plt.close()
-
-    monthly_expenditure = db.session.query(
-        db.func.date_format(Expenditure.date, '%Y-%m').label('month'),
-        db.func.sum(Expenditure.amount).label('total_expenditure')
-    ).group_by('month').all()
-
-    months = [item[0] for item in monthly_expenditure]
-    expenditure_values = [item[1] if item[1] is not None else 0 for item in monthly_expenditure]
-
-    plt.figure(figsize=(12, 6))
-    sns.lineplot(x=months, y=expenditure_values, marker='o')
-    plt.title('Monthly Expenditure')
-    plt.xlabel('Month')
-    plt.ylabel('Expenditure')
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.savefig('static/monthly_expenditure.png')  
-    plt.close()
-
-    daily_sales = db.session.query(
-        db.func.date(Order.created_at).label('date'),  
-        db.func.sum(OrderItem.quantity).label('total_sales')
-    ).join(OrderItem).group_by(db.func.date(Order.created_at)).order_by(db.func.date(Order.created_at)).all()
-
-    dates = [record.date.strftime('%Y-%m-%d') for record in daily_sales]
-    daily_sales_values = [record.total_sales for record in daily_sales]
-
-    plt.figure(figsize=(12, 6))
-    sns.lineplot(x=dates, y=daily_sales_values, marker='o')
-    plt.title('Daily Sales')
-    plt.xlabel('Date')
-    plt.ylabel('Total Sales')
-    plt.xticks(rotation=45)  
-    plt.tight_layout()
-    plt.savefig('static/daily_sales.png')  
-    plt.close()
-
-    return render_template('reports.html', low_stock=low_stock, total_inventory_value=total_inventory_value, order_counts=order_counts_list)
-'''
-'''
-@app.route('/reports')
-@manager_required
-def reports():
-    """Reports route."""
-    log_user_activity('visited reports')
-    
-    # Low Stock Items
-    low_stock = Product.query.filter(Product.quantity <= Product.low_stock_threshold).all()
-    
-    # Total Inventory Value
-    total_inventory_value = db.session.query(db.func.sum(Product.quantity * Product.price)).scalar() or 0
-    
-    # Order Counts
-    order_counts = db.session.query(
-        Order.status,
-        db.func.count(Order.id).label('count')
-    ).group_by(Order.status).all()
-
-    order_counts_list = [{'status': status, 'count': count} for status, count in order_counts]
-
-    # Total Sales by Product
-    total_sales_query = db.session.query(
-        Product.name,
-        db.func.sum(OrderItem.quantity).label('total_sales')
-    ).join(OrderItem, Product.id == OrderItem.product_id)\
-     .join(Order, OrderItem.order_id == Order.id)\
-     .group_by(Product.id, Product.name)\
-     .all()
-
-    products = [item[0] for item in total_sales_query]
-    sales_values = [item[1] if item[1] is not None else 0 for item in total_sales_query]
-
-    # Monthly Expenditure
-    monthly_expenditure_query = db.session.query(
-        db.func.date_format(Expenditure.date, '%Y-%m').label('month'),
-        db.func.sum(Expenditure.amount).label('total_expenditure')
-    ).group_by('month').all()
-
-    months = [item[0] for item in monthly_expenditure_query]
-    expenditure_values = [item[1] if item[1] is not None else 0 for item in monthly_expenditure_query]
-
-    # Debugging print statements
-    print("Products:", products)
-    print("Sales Values:", sales_values)
-    print("Months:", months)
-    print("Expenditure Values:", expenditure_values)
-
-    return render_template(
-        'reports.html', 
-        low_stock=low_stock, 
-        total_inventory_value=total_inventory_value, 
-        order_counts=order_counts_list,
-        products=products,
-        sales_values=sales_values,
-        months=months,
-        expenditure_values=expenditure_values
-    )'''
 
 @app.route('/')
 @app.route('/reports')
@@ -869,12 +743,19 @@ def edit_bus(bus_id):
 def delete_bus(bus_id):
     """Delete a bus."""
     bus = Bus.query.get_or_404(bus_id)
+
+    # Delete related BusPart records
+    related_bus_parts = BusPart.query.filter_by(bus_id=bus_id).all()
+    for part in related_bus_parts:
+        db.session.delete(part)
+
     db.session.delete(bus)
     db.session.commit()
     
     flash('Bus deleted successfully')
     log_user_activity(f'deleted bus {bus.name}')
     return redirect(url_for('buses'))
+
 
 class BusPart(db.Model):
     """Define the BusPart model to associate products with buses."""
@@ -931,19 +812,40 @@ def assign_parts():
 @login_required
 def assigned_to():
     """View assigned parts to buses."""
-    assignments = db.session.query(
-        BusPart.bus_id,
-        Bus.bus_number.label('bus_number'),
-        BusPart.product_id,
-        Product.name.label('product_name'),
-        BusPart.quantity,
-        BusPart.assigned_by,  
-        BusPart.time.label('date_assigned') 
-    ).join(Bus).join(Product).distinct().all()  
+    try:
+        # Modified query to ensure all fields are properly selected
+        assignments = db.session.query(
+            BusPart.bus_id,
+            Bus.bus_number.label('bus_number'),
+            BusPart.product_id,
+            Product.name.label('product_name'),
+            BusPart.quantity,
+            BusPart.assigned_by,
+            BusPart.time.label('date_assigned')
+        ).join(
+            Bus, Bus.id == BusPart.bus_id  # Explicit join condition
+        ).join(
+            Product, Product.id == BusPart.product_id  # Explicit join condition
+        ).order_by(BusPart.time.desc()).all()
 
-    print("Assignments Retrieved:", assignments)  # Debugging output
+        print("Assignments Retrieved:", assignments)  # Debugging output
+        
+        # Convert query results to dictionaries for easier template handling
+        formatted_assignments = []
+        for assignment in assignments:
+            formatted_assignments.append({
+                'bus_number': assignment.bus_number,
+                'product_name': assignment.product_name,
+                'quantity': assignment.quantity,
+                'assigned_by': assignment.assigned_by,
+                'date_assigned': assignment.date_assigned
+            })
 
-    return render_template('assigned_to.html', assignments=assignments)
+        return render_template('assigned_to.html', assignments=formatted_assignments)
+    except Exception as e:
+        print(f"Error in assigned_to route: {str(e)}")  # Debug logging
+        flash('Error loading assignments data', 'error')
+        return render_template('assigned_to.html', assignments=[])
 
 
 @app.route('/manage-buses', methods=['GET'])

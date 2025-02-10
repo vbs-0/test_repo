@@ -2,12 +2,23 @@
 
 {% block content %}
 <div class="space-y-6">
-    <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold">Orders</h1>
+    <div class="page-header">
+        <h1 class="text-2xl font-bold text-white">Orders</h1>
         <div class="flex justify-end space-x-3">
-            <form action="" method="get" class="flex space-x-3">
-                <input type="text" id="search" name="search" value="{{ search }}" placeholder="Search Orders" class="block w-full rounded-md border-black shadow-sm focus:border-indigo-500 text-black focus:ring-indigo-500">
-                <select id="sort" name="status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" onchange="this.form.submit()">
+            <!-- Search and Filter Section -->
+            <form id="searchForm" action="" method="get" class="grid grid-cols-2 gap-4">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-cyan-500"></i>
+                    <input type="text" 
+                           id="search" 
+                           name="search" 
+                           value="{{ search }}" 
+                           placeholder="Search Orders" 
+                           class="w-full p-2 pl-10 bg-gray-800 text-cyan-300 border border-cyan-600 rounded-lg focus:ring-2 focus:ring-cyan-500">
+                </div>
+                <select id="status" 
+                        name="status" 
+                        class="w-full p-2 bg-gray-800 text-cyan-300 border border-cyan-600 rounded-lg focus:ring-2 focus:ring-cyan-500">
                     <option value="all" {% if status == 'all' %}selected{% endif %}>All</option>
                     <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
                     <option value="approved" {% if status == 'approved' %}selected{% endif %}>Approved</option>
@@ -15,30 +26,32 @@
                 </select>
             </form>
             {% if current_user.role in ['MANAGER', 'SUPERVISOR'] %}
-            <button onclick="document.getElementById('createOrderModal').classList.remove('hidden')" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+            <button onclick="document.getElementById('createOrderModal').classList.remove('hidden')" 
+                    class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors duration-200 flex items-center">
+                <i class="fas fa-plus mr-2"></i>
                 Create Order
             </button>
             {% endif %}
         </div>
     </div>
 
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+    <div class="bg-gray-900 shadow-md rounded-lg overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-800">
+            <thead class="bg-gray-800">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Order ID</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Created By</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Status</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Created At</th>
+                    <th class="px-4 py-2 text-left text-xs font-medium text-cyan-400 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200" id="orders-table-body">
+            <tbody class="divide-y divide-gray-800" id="orders-table-body">
                 {% for order, user_name, user_role in orders %}
-                <tr data-status="{{ order.status }}" data-order-id="{{ order.id }}">
-                    <td class="px-6 py-4 whitespace-nowrap">#{{ order.id }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ user_name }} ({{ user_role }})</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                <tr class="hover:bg-gray-800 transition-colors duration-200">
+                    <td class="px-4 py-2 text-cyan-300">#{{ order.id }}</td>
+                    <td class="px-4 py-2 text-cyan-300">{{ user_name }} ({{ user_role }})</td>
+                    <td class="px-4 py-2">
                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                             {% if order.status == 'PENDING' %}bg-yellow-100 text-yellow-800
                             {% elif order.status == 'APPROVED' %}bg-green-100 text-green-800
@@ -47,30 +60,41 @@
                             {{ order.status }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {% if current_user.role in ['MANAGER','SUPERVISOR','ADMIN'] and order.status == 'PENDING' %}
-                        <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="inline">
-                            <input type="hidden" name="status" value="APPROVED">
-                            <button type="submit" class="text-green-600 hover:text-green-900 mr-3">Approve</button>
-                        </form>
-                        <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="inline">
-                            <input type="hidden" name="status" value="REJECTED">
-                            <button type="submit" class="text-red-600 hover:text-red-900">Reject</button>
-                        </form>
-                        {% endif %}
-                        <button onclick="toggleOrderDetails({{ order.id }})" class="text-white bg-yellow-600 hover:bg-orange-600 px-4 py-2 rounded-md ml-3">Order Details</button>
-
+                    <td class="px-4 py-2 text-cyan-300">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td class="px-4 py-2 whitespace-nowrap">
+                        <div class="flex space-x-2">
+                            {% if current_user.role in ['MANAGER','SUPERVISOR','ADMIN'] and order.status == 'PENDING' %}
+                            <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="inline">
+                                <input type="hidden" name="status" value="APPROVED">
+                                <button type="submit" 
+                                        class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors duration-200">
+                                    Approve
+                                </button>
+                            </form>
+                            <form action="{{ url_for('update_order_status', order_id=order.id) }}" method="POST" class="inline">
+                                <input type="hidden" name="status" value="REJECTED">
+                                <button type="submit" 
+                                        class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-200">
+                                    Reject
+                                </button>
+                            </form>
+                            {% endif %}
+                            <button onclick="toggleOrderDetails({{ order.id }})" 
+                                    class="px-3 py-1 bg-cyan-600 text-white rounded hover:bg-cyan-700 transition-colors duration-200">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Details
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 <tr id="orderDetails{{ order.id }}" class="hidden">
-                    <td colspan="5" class="px-6 py-4" style="background: linear-gradient(145deg, var(--bg-card), rgba(30, 27, 75, 0.95));">
-                        <div class="text-sm text-white">
-                            <h4 class="font-medium text-indigo-300 mb-2">Order Items:</h4>
+                    <td colspan="5" class="px-4 py-2 bg-gray-800">
+                        <div class="text-sm">
+                            <h4 class="font-medium text-cyan-400 mb-2">Order Items:</h4>
                             <ul class="list-disc list-inside space-y-1">
                                 {% for item in order.items %}
-                                <li class="flex items-center gap-2">
-                                    <i class="fas fa-box text-indigo-400"></i>
+                                <li class="flex items-center gap-2 text-cyan-300">
+                                    <i class="fas fa-box text-cyan-500"></i>
                                     <span>{{ item.product.name }} - Quantity: {{ item.quantity }}</span>
                                 </li>
                                 {% endfor %}
@@ -168,12 +192,8 @@
         });
 
         function toggleOrderDetails(orderId) {
-            const detailsRow = document.getElementById(`orderDetails${orderId}`);
-            if (detailsRow.classList.contains('hidden')) {
-                detailsRow.classList.remove('hidden');
-            } else {
-                detailsRow.classList.add('hidden');
-            }
+            const detailsRow = document.getElementById('orderDetails' + orderId);
+            detailsRow.classList.toggle('hidden');
         }
 
         // Close order details when clicking outside
